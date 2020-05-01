@@ -1,0 +1,41 @@
+package com.techie.ssjwt.service;
+
+import com.techie.ssjwt.model.AuthenticationRequest;
+import com.techie.ssjwt.model.UserInfo;
+import com.techie.ssjwt.repository.JWTAuthenticationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Optional;
+
+@Service
+public class JwtUserDetailsService implements UserDetailsService {
+
+
+    @Autowired
+    JWTAuthenticationRepository jwtAuthenticationRepository;
+
+    @Autowired
+    private PasswordEncoder bcryptEncoder;
+
+    @Override
+    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
+        UserInfo userInfo =  jwtAuthenticationRepository.findByUsername(userName);
+        if (userInfo == null) {
+            throw new UsernameNotFoundException("User not found with username: " + userName);
+        }
+        return new User(userInfo.getUsername(), userInfo.getPassword(), new ArrayList<>());
+    }
+
+    public UserInfo saveUser(UserInfo userInfo) {
+        userInfo.setPassword(bcryptEncoder.encode(userInfo.getPassword()));
+        return jwtAuthenticationRepository.save(userInfo);
+    }
+}
